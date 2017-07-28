@@ -113,7 +113,8 @@ public class NamedCSVImporter implements BoardImporter {
 
     private static final String Refs[] =
             {"Designator", "designator", "Part", "part", "Component", "component", "RefDes", "Ref"};
-    private static final String Vals[] = {"Value", "value", "Val", "val", "Comment", "comment"};
+    private static final String Vals[] = {"Value", "value", "Val", "val"};
+    private static final String Cmmts[] = {"Comment", "comment"};
     private static final String Packs[] =
             {"Footprint", "footprint", "Package", "package", "Pattern", "pattern"};
     private static final String Xs[] =
@@ -125,7 +126,7 @@ public class NamedCSVImporter implements BoardImporter {
     private static final String Heights[] = {"Height", "height", "Height(mil)", "Height(mm)"};
     //////////////////////////////////////////////////////////
     static private int Ref = -1, Val = -1, Pack = -1, X = -1, Y = -1, Rot = -1, TB = -1, HT = -1,
-            Len = 0;
+            Cmmt = -1, Len = 0;
     static private int units_mils_x = 0, units_mils_y = 0, units_mils_height = 0; // set if units
                                                                                   // are in mils not
                                                                                   // mm
@@ -166,8 +167,12 @@ public class NamedCSVImporter implements BoardImporter {
 
     private static boolean checkCSV(String str[]) {
 
+        Val = checkCSV(Vals, str);
+        Cmmt = checkCSV(Cmmts, str);
+        if(Val==-1)Val = Cmmt;
+    	
         // note that layer (TB) and Height (HT) are optional and thus checked against -2
-        if ((Ref = checkCSV(Refs, str)) != -1 && (Val = checkCSV(Vals, str)) != -1
+        if ((Ref = checkCSV(Refs, str)) != -1 && Val != -1
                 && (Pack = checkCSV(Packs, str)) != -1 && (X = checkCSV(Xs, str)) != -1
                 && (Y = checkCSV(Ys, str)) != -1 && (Rot = checkCSV(Rots, str)) != -1) {
 
@@ -177,6 +182,7 @@ public class NamedCSVImporter implements BoardImporter {
 
             Len = Ref <= Len ? Len : Ref;
             Len = Val <= Len ? Len : Val;
+            Len = Cmmt <= Len ? Len : Cmmt;
             Len = Pack <= Len ? Len : Pack;
             Len = X <= Len ? Len : X;
             Len = Y <= Len ? Len : Y;
@@ -188,6 +194,7 @@ public class NamedCSVImporter implements BoardImporter {
         }
         Logger.trace("checkCSV: Ref = " + Ref);
         Logger.trace("checkCSV: Val = " + Val);
+        Logger.trace("checkCSV: Cmmt = " + Cmmt);
         Logger.trace("checkCSV: Pack = " + Pack);
         Logger.trace("checkCSV: X = " + X);
         Logger.trace("checkCSV: Y = " + Y);
@@ -196,6 +203,7 @@ public class NamedCSVImporter implements BoardImporter {
         Logger.trace("checkCSV: HT = " + HT);
         Ref = -1;
         Val = -1;
+        Cmmt = -1;
         Pack = -1;
         X = -1;
         Y = -1;
@@ -335,7 +343,9 @@ public class NamedCSVImporter implements BoardImporter {
                         0, placementRotation));
                 Configuration cfg = Configuration.get();
                 if (cfg != null && createMissingParts) {
-                    String partId = as[Pack] + "-" + as[Val];
+                    String partId = as[Pack];
+                    if(!as[Val].isEmpty())partId = partId+"-"+as[Val];
+                    if(!as[Cmmt].isEmpty())partId = partId+"-"+as[Cmmt];
                     Part part = cfg.getPart(partId);
 
                     if (part == null) {
