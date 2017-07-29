@@ -169,7 +169,9 @@ public class NamedCSVImporter implements BoardImporter {
 
         Val = checkCSV(Vals, str);
         Cmmt = checkCSV(Cmmts, str);
-        if(Val==-1)Val = Cmmt;
+        if(Val==-1) { 
+        	Val = Cmmt;
+        }
     	
         // note that layer (TB) and Height (HT) are optional and thus checked against -2
         if ((Ref = checkCSV(Refs, str)) != -1 && Val != -1
@@ -344,8 +346,12 @@ public class NamedCSVImporter implements BoardImporter {
                 Configuration cfg = Configuration.get();
                 if (cfg != null && createMissingParts) {
                     String partId = as[Pack];
-                    if(!as[Val].isEmpty())partId = partId+"-"+as[Val];
-                    if(!as[Cmmt].isEmpty())partId = partId+"-"+as[Cmmt];
+                    if(!as[Val].isEmpty()) {
+                    	partId = partId+"-"+as[Val];
+                    }
+                    if(!as[Cmmt].isEmpty()) {
+                    	partId = partId+"-"+as[Cmmt];
+                    }
                     Part part = cfg.getPart(partId);
 
                     if (part == null) {
