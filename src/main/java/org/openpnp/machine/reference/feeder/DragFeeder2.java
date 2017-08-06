@@ -51,20 +51,7 @@ import org.simpleframework.xml.Element;
 import org.simpleframework.xml.core.Persist;
 
 /**
- * Vision System Description
- * 
- * The Vision Operation is defined as moving the Camera to the defined Pick Location, performing a
- * template match against the Template Image bound by the Area of Interest and then storing the
- * offsets from the Pick Location to the matched image as Vision Offsets.
- * 
- * The feed operation consists of: 1. Apply the Vision Offsets to the Feed Start Location and Feed
- * End Location. 2. Feed the tape with the modified Locations. 3. Perform the Vision Operation. 4.
- * Apply the new Vision Offsets to the Pick Location and return the Pick Location for Picking.
- * 
- * This leaves the head directly above the Pick Location, which means that when the Feeder is then
- * commanded to pick the Part it only needs to move the distance of the Vision Offsets and do the
- * pick. The Vision Offsets are then used in the next feed operation to be sure to hit the tape at
- * the right position.
+
  */
 public class DragFeeder2 extends ReferenceFeeder {
 
@@ -80,18 +67,16 @@ public class DragFeeder2 extends ReferenceFeeder {
     @Attribute(required = false)
     protected String actuatorName;
     @Element(required = false)
-    protected Vision vision = new Vision();
+    protected double backoffDistance_mm = 0.15;    
     @Element(required = false)
-    protected Length backoffDistance = new Length(0, LengthUnit.Millimeters);    
-
+    protected double feedDistance_mm = 4.2;
+    @Element(required = false)
+    protected String feedDirection = "-Y";
+    @Element(required = false)
+    protected int componentPitch_mm = 4; 
+    
     protected Location pickLocation;
 
-    /*
-     * visionOffset contains the difference between where the part was expected to be and where it
-     * is. Subtracting these offsets from the pickLocation produces the correct pick location.
-     * Likewise, subtracting the offsets from the feedStart and feedEndLocations should produce the
-     * correct feed locations.
-     */
     protected Location visionOffset;
 
     @Override
@@ -102,6 +87,10 @@ public class DragFeeder2 extends ReferenceFeeder {
         return pickLocation;
     }
 
+    
+    private int pickPoint = 0;
+    
+    
     @Override
     public void feed(Nozzle nozzle) throws Exception {
         Logger.debug("feed({})", nozzle);
@@ -127,22 +116,38 @@ public class DragFeeder2 extends ReferenceFeeder {
                     actuatorName, head.getName()));
         }
 
+        
+        // calculate do we need feed operation
+        pickPoint -= this.componentPitch_mm;
+        
+        
+       int dX = 0;
+       int dY = 0;
+       if(this.feedDirection.equals("+X")) dX =  1;
+       if(this.feedDirection.equals("-X")) dX = -1;
+       if(this.feedDirection.equals("+Y")) dY =  1;
+       if(this.feedDirection.equals("-Y")) dY = -1;
+
+    	        
+       if(pickPoint>=0) {
+    	   // calculate new picklocation (component pitch is less than hole pitch)
+           Location lp = new Location(LengthUnit.Millimeters, pickPoint * dX, pickPoint * dY, 0,0);
+           pickLocation = this.location.add(lp);
+    	   return; // no need for drag-operation
+       }
+
+       // calculate feed moves
+       
+       Location lf = new Location(LengthUnit.Millimeters,  
+    		   						dX * this.feedDistance_mm,
+    		   						dY * this.feedDistance_mm,
+    		   						0,0);
+       Location lb = new Location(LengthUnit.Millimeters, 
+    		   					  -dX * this.backoffDistance_mm,
+    		   					  -dY * this.backoffDistance_mm,
+    		   					  0,0);
+       
         head.moveToSafeZ();
-
-        if (vision.isEnabled()) {
-            if (visionOffset == null) {
-                // This is the first feed with vision, or the offset has
-                // been invalidated for some reason. We need to get an offset,
-                // complete the feed operation and then get a new offset
-                // for the next operation. By front loading this we make sure
-                // that all future calls can go directly to the feed operation
-                // and skip checking the vision first.
-                Logger.debug("First feed, running vision pre-flight.");
-
-                visionOffset = getVisionOffsets(head, location);
-            }
-            Logger.debug("visionOffsets " + visionOffset);
-        }
 
         // Now we have visionOffsets (if we're using them) so we
         // need to create a local, offset version of the feedStartLocation,
@@ -150,13 +155,11 @@ public class DragFeeder2 extends ReferenceFeeder {
         // for the pick operation while feed start and end are used
         // here and then discarded.
         Location feedStartLocation = this.feedStartLocation;
-        Location feedEndLocation = this.feedEndLocation;
-        pickLocation = this.location;
-        if (visionOffset != null) {
-            feedStartLocation = feedStartLocation.subtract(visionOffset);
-            feedEndLocation = feedEndLocation.subtract(visionOffset);
-            pickLocation = pickLocation.subtract(visionOffset);
-        }
+        Location feedEndLocation = this.feedStartLocation.add(lf);
+        
+        pickPoint += (int)(feedDistance_mm + 0.5);
+        Location lp = new Location(LengthUnit.Millimeters, pickPoint * dX, pickPoint * dY, 0,0);
+        pickLocation = this.location.add(lp);
 
         // Move the actuator to the feed start location.
         actuator.moveTo(feedStartLocation.derive(null, null, Double.NaN, Double.NaN));
@@ -171,8 +174,8 @@ public class DragFeeder2 extends ReferenceFeeder {
         actuator.moveTo(feedEndLocation, feedSpeed * actuator.getHead().getMachine().getSpeed());
         
         // backoff to release tension from the pin
-        if (backoffDistance.getValue() != 0) {
-            Location backoffLocation = Utils2D.getPointAlongLine(feedEndLocation, feedStartLocation, backoffDistance);
+        if (backoffDistance_mm != 0) {
+            Location backoffLocation = feedEndLocation.add(lb);
             actuator.moveTo(backoffLocation, feedSpeed * actuator.getHead().getMachine().getSpeed());
         }
         
@@ -181,95 +184,9 @@ public class DragFeeder2 extends ReferenceFeeder {
         // retract the pin
         actuator.actuate(false);
 
-        if (vision.isEnabled()) {
-            visionOffset = getVisionOffsets(head, location);
-
-            Logger.debug("final visionOffsets " + visionOffset);
-        }
-
         Logger.debug("Modified pickLocation {}", pickLocation);
     }
 
-    // TODO: Throw an Exception if vision fails.
-    private Location getVisionOffsets(Head head, Location pickLocation) throws Exception {
-        Logger.debug("getVisionOffsets({}, {})", head.getName(), pickLocation);
-        // Find the Camera to be used for vision
-        Camera camera = null;
-        for (Camera c : head.getCameras()) {
-            if (c.getVisionProvider() != null) {
-                camera = c;
-            }
-        }
-
-        if (camera == null) {
-            throw new Exception("No vision capable camera found on head.");
-        }
-
-        head.moveToSafeZ();
-
-        // Position the camera over the pick location.
-        Logger.debug("Move camera to pick location.");
-        camera.moveTo(pickLocation);
-
-        // Move the camera to be in focus over the pick location.
-        // head.moveTo(head.getX(), head.getY(), z, head.getC());
-
-        // Settle the camera
-        Thread.sleep(camera.getSettleTimeMs());
-
-        VisionProvider visionProvider = camera.getVisionProvider();
-
-        Rectangle aoi = getVision().getAreaOfInterest();
-
-        // Perform the template match
-        Logger.debug("Perform template match.");
-        Point[] matchingPoints = visionProvider.locateTemplateMatches(aoi.getX(), aoi.getY(),
-                aoi.getWidth(), aoi.getHeight(), 0, 0, vision.getTemplateImage());
-
-        // Get the best match from the array
-        Point match = matchingPoints[0];
-
-        // match now contains the position, in pixels, from the top left corner
-        // of the image to the top left corner of the match. We are interested in
-        // knowing how far from the center of the image the center of the match is.
-        double imageWidth = camera.getWidth();
-        double imageHeight = camera.getHeight();
-        double templateWidth = vision.getTemplateImage().getWidth();
-        double templateHeight = vision.getTemplateImage().getHeight();
-        double matchX = match.x;
-        double matchY = match.y;
-
-        Logger.debug("matchX {}, matchY {}", matchX, matchY);
-
-        // Adjust the match x and y to be at the center of the match instead of
-        // the top left corner.
-        matchX += (templateWidth / 2);
-        matchY += (templateHeight / 2);
-
-        Logger.debug("centered matchX {}, matchY {}", matchX, matchY);
-
-        // Calculate the difference between the center of the image to the
-        // center of the match.
-        double offsetX = (imageWidth / 2) - matchX;
-        double offsetY = (imageHeight / 2) - matchY;
-
-        Logger.debug("offsetX {}, offsetY {}", offsetX, offsetY);
-
-        // Invert the Y offset because images count top to bottom and the Y
-        // axis of the machine counts bottom to top.
-        offsetY *= -1;
-
-        Logger.debug("negated offsetX {}, offsetY {}", offsetX, offsetY);
-
-        // And convert pixels to units
-        Location unitsPerPixel = camera.getUnitsPerPixel();
-        offsetX *= unitsPerPixel.getX();
-        offsetY *= unitsPerPixel.getY();
-
-        Logger.debug("final, in camera units offsetX {}, offsetY {}", offsetX, offsetY);
-
-        return new Location(unitsPerPixel.getUnits(), offsetX, offsetY, 0, 0);
-    }
 
     @Override
     public String toString() {
@@ -282,14 +199,6 @@ public class DragFeeder2 extends ReferenceFeeder {
 
     public void setFeedStartLocation(Location feedStartLocation) {
         this.feedStartLocation = feedStartLocation;
-    }
-
-    public Location getFeedEndLocation() {
-        return feedEndLocation;
-    }
-
-    public void setFeedEndLocation(Location feedEndLocation) {
-        this.feedEndLocation = feedEndLocation;
     }
 
     public Double getFeedSpeed() {
@@ -310,22 +219,35 @@ public class DragFeeder2 extends ReferenceFeeder {
         propertyChangeSupport.firePropertyChange("actuatorName", oldValue, actuatorName);
     }
 
-    public Length getBackoffDistance() {
-        return backoffDistance;
+    public double getBackoffDistance_mm() {
+        return backoffDistance_mm;
     }
 
-    public void setBackoffDistance(Length backoffDistance) {
-        this.backoffDistance = backoffDistance;
+    public void setBackoffDistance_mm(double backoffDistance) {
+        this.backoffDistance_mm = backoffDistance;
     }
 
-    public Vision getVision() {
-        return vision;
+    public double getFeedDistance_mm() { 
+    	return feedDistance_mm;
+    }
+    public void setFeedDistance_mm(double feedDistance) {
+    	this.feedDistance_mm = feedDistance;
     }
 
-    public void setVision(Vision vision) {
-        this.vision = vision;
+    public String getFeedDirection() {
+    	return feedDirection;
     }
-
+    public void setFeedDirection(String direction) {
+    	this.feedDirection = direction;
+    }
+    
+    public int getComponentPitch_mm() {
+    	return componentPitch_mm;
+    }
+    public void setComponentPitch_mm(int pitch) {
+    	this.componentPitch_mm = pitch;
+    }
+    
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         propertyChangeSupport.addPropertyChangeListener(listener);
     }
@@ -362,92 +284,4 @@ public class DragFeeder2 extends ReferenceFeeder {
         return null;
     }
 
-    public static class Vision {
-        @Attribute(required = false)
-        private boolean enabled;
-        @Attribute(required = false)
-        private String templateImageName;
-        @Element(required = false)
-        private Rectangle areaOfInterest = new Rectangle();
-        @Element(required = false)
-        private Location templateImageTopLeft = new Location(LengthUnit.Millimeters);
-        @Element(required = false)
-        private Location templateImageBottomRight = new Location(LengthUnit.Millimeters);
-
-        private BufferedImage templateImage;
-        private boolean templateImageDirty;
-
-        public Vision() {
-            Configuration.get().addListener(new ConfigurationListener.Adapter() {
-                @Override
-                public void configurationComplete(Configuration configuration) throws Exception {
-                    if (templateImageName != null) {
-                        File file = configuration.getResourceFile(Vision.this.getClass(),
-                                templateImageName);
-                        templateImage = ImageIO.read(file);
-                    }
-                }
-            });
-        }
-
-        @SuppressWarnings("unused")
-        @Persist
-        private void persist() throws IOException {
-            if (templateImageDirty) {
-                File file = null;
-                if (templateImageName != null) {
-                    file = Configuration.get().getResourceFile(this.getClass(), templateImageName);
-                }
-                else {
-                    file = Configuration.get().createResourceFile(this.getClass(), "tmpl_", ".png");
-                    templateImageName = file.getName();
-                }
-                ImageIO.write(templateImage, "png", file);
-                templateImageDirty = false;
-            }
-        }
-
-        public boolean isEnabled() {
-            return enabled;
-        }
-
-        public void setEnabled(boolean enabled) {
-            this.enabled = enabled;
-        }
-
-        public BufferedImage getTemplateImage() {
-            return templateImage;
-        }
-
-        public void setTemplateImage(BufferedImage templateImage) {
-            if (templateImage != this.templateImage) {
-                this.templateImage = templateImage;
-                templateImageDirty = true;
-            }
-        }
-
-        public Rectangle getAreaOfInterest() {
-            return areaOfInterest;
-        }
-
-        public void setAreaOfInterest(Rectangle areaOfInterest) {
-            this.areaOfInterest = areaOfInterest;
-        }
-
-        public Location getTemplateImageTopLeft() {
-            return templateImageTopLeft;
-        }
-
-        public void setTemplateImageTopLeft(Location templateImageTopLeft) {
-            this.templateImageTopLeft = templateImageTopLeft;
-        }
-
-        public Location getTemplateImageBottomRight() {
-            return templateImageBottomRight;
-        }
-
-        public void setTemplateImageBottomRight(Location templateImageBottomRight) {
-            this.templateImageBottomRight = templateImageBottomRight;
-        }
-    }
 }

@@ -66,6 +66,8 @@ import com.jgoodies.forms.layout.ColumnSpec;
 import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.FormSpecs;
 import com.jgoodies.forms.layout.RowSpec;
+import javax.swing.JComboBox;
+import javax.swing.DefaultComboBoxModel;
 
 @SuppressWarnings("serial")
 public class DragFeeder2ConfigurationWizard
@@ -75,37 +77,12 @@ public class DragFeeder2ConfigurationWizard
     private JTextField textFieldFeedStartX;
     private JTextField textFieldFeedStartY;
     private JTextField textFieldFeedStartZ;
-    private JTextField textFieldFeedEndX;
-    private JTextField textFieldFeedEndY;
-    private JTextField textFieldFeedEndZ;
     private JTextField textFieldFeedRate;
     private JLabel lblActuatorId;
     private JTextField textFieldActuatorId;
     private JPanel panelGeneral;
-    private JPanel panelVision;
     private JPanel panelLocations;
-    private JCheckBox chckbxVisionEnabled;
-    private JPanel panelVisionEnabled;
-    private JPanel panelTemplate;
-    private JLabel labelTemplateImage;
-    private JButton btnChangeTemplateImage;
-    private JSeparator separator;
-    private JPanel panelVisionTemplateAndAoe;
-    private JPanel panelAoE;
-    private JLabel lblX_1;
-    private JLabel lblY_1;
-    private JTextField textFieldAoiX;
-    private JTextField textFieldAoiY;
-    private JTextField textFieldAoiWidth;
-    private JTextField textFieldAoiHeight;
     private LocationButtonsPanel locationButtonsPanelFeedStart;
-    private LocationButtonsPanel locationButtonsPanelFeedEnd;
-    private JLabel lblWidth;
-    private JLabel lblHeight;
-    private JButton btnChangeAoi;
-    private JButton btnCancelChangeAoi;
-    private JPanel panel;
-    private JButton btnCancelChangeTemplateImage;
 
     public DragFeeder2ConfigurationWizard(DragFeeder2 feeder) {
         super(feeder);
@@ -144,27 +121,31 @@ public class DragFeeder2ConfigurationWizard
         panelLocations.setBorder(new TitledBorder(null, "Locations", TitledBorder.LEADING,
                 TitledBorder.TOP, null, null));
         panelLocations.setLayout(new FormLayout(new ColumnSpec[] {
-                FormSpecs.RELATED_GAP_COLSPEC,
-                FormSpecs.DEFAULT_COLSPEC,
-                FormSpecs.RELATED_GAP_COLSPEC,
-                FormSpecs.DEFAULT_COLSPEC,
-                FormSpecs.RELATED_GAP_COLSPEC,
-                FormSpecs.DEFAULT_COLSPEC,
-                FormSpecs.RELATED_GAP_COLSPEC,
-                FormSpecs.DEFAULT_COLSPEC,
-                FormSpecs.RELATED_GAP_COLSPEC,
-                ColumnSpec.decode("left:default:grow"),},
-            new RowSpec[] {
-                FormSpecs.RELATED_GAP_ROWSPEC,
-                FormSpecs.DEFAULT_ROWSPEC,
-                FormSpecs.RELATED_GAP_ROWSPEC,
-                FormSpecs.DEFAULT_ROWSPEC,
-                FormSpecs.RELATED_GAP_ROWSPEC,
-                FormSpecs.DEFAULT_ROWSPEC,
-                FormSpecs.RELATED_GAP_ROWSPEC,
-                FormSpecs.DEFAULT_ROWSPEC,
-                FormSpecs.RELATED_GAP_ROWSPEC,
-                FormSpecs.DEFAULT_ROWSPEC,}));
+        		FormSpecs.RELATED_GAP_COLSPEC,
+        		FormSpecs.DEFAULT_COLSPEC,
+        		FormSpecs.RELATED_GAP_COLSPEC,
+        		ColumnSpec.decode("max(30dlu;default)"),
+        		FormSpecs.RELATED_GAP_COLSPEC,
+        		FormSpecs.DEFAULT_COLSPEC,
+        		FormSpecs.RELATED_GAP_COLSPEC,
+        		FormSpecs.DEFAULT_COLSPEC,
+        		FormSpecs.RELATED_GAP_COLSPEC,
+        		ColumnSpec.decode("left:default:grow"),},
+        	new RowSpec[] {
+        		FormSpecs.RELATED_GAP_ROWSPEC,
+        		FormSpecs.DEFAULT_ROWSPEC,
+        		FormSpecs.RELATED_GAP_ROWSPEC,
+        		FormSpecs.DEFAULT_ROWSPEC,
+        		FormSpecs.RELATED_GAP_ROWSPEC,
+        		FormSpecs.DEFAULT_ROWSPEC,
+        		FormSpecs.RELATED_GAP_ROWSPEC,
+        		FormSpecs.DEFAULT_ROWSPEC,
+        		FormSpecs.RELATED_GAP_ROWSPEC,
+        		FormSpecs.DEFAULT_ROWSPEC,
+        		FormSpecs.RELATED_GAP_ROWSPEC,
+        		FormSpecs.DEFAULT_ROWSPEC,
+        		FormSpecs.RELATED_GAP_ROWSPEC,
+        		FormSpecs.DEFAULT_ROWSPEC,}));
 
         JLabel lblX = new JLabel("X");
         panelLocations.add(lblX, "4, 4");
@@ -194,135 +175,45 @@ public class DragFeeder2ConfigurationWizard
                 textFieldFeedStartY, textFieldFeedStartZ, null);
         panelLocations.add(locationButtonsPanelFeedStart, "10, 6");
 
-        JLabel lblFeedEndLocation = new JLabel("Feed End Location");
+        JLabel lblFeedEndLocation = new JLabel("Feed Direction");
         panelLocations.add(lblFeedEndLocation, "2, 8, right, default");
-
-        textFieldFeedEndX = new JTextField();
-        panelLocations.add(textFieldFeedEndX, "4, 8");
-        textFieldFeedEndX.setColumns(8);
-
-        textFieldFeedEndY = new JTextField();
-        panelLocations.add(textFieldFeedEndY, "6, 8");
-        textFieldFeedEndY.setColumns(8);
-
-        textFieldFeedEndZ = new JTextField();
-        panelLocations.add(textFieldFeedEndZ, "8, 8");
-        textFieldFeedEndZ.setColumns(8);
-
-        locationButtonsPanelFeedEnd = new LocationButtonsPanel(textFieldFeedEndX, textFieldFeedEndY,
-                textFieldFeedEndZ, null);
-        panelLocations.add(locationButtonsPanelFeedEnd, "10, 8");
+        
+        cbDirection = new JComboBox();
+        cbDirection.setModel(new DefaultComboBoxModel(new String[] {"+X", "+Y", "-X", "-Y"}));
+        cbDirection.setSelectedIndex(0);
+        panelLocations.add(cbDirection, "4, 8, fill, default");
+        
+        lblNewLabel = new JLabel("Feed Distance");
+        lblNewLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        panelLocations.add(lblNewLabel, "2, 10, right, default");
+        
+        tfFeedDistance = new JTextField();
+        tfFeedDistance.setText("4");
+        panelLocations.add(tfFeedDistance, "4, 10");
+        tfFeedDistance.setColumns(10);
+        
+        lblNewLabel_2 = new JLabel("mm");
+        panelLocations.add(lblNewLabel_2, "6, 10, default, center");
         
         lblBackoffDistance = new JLabel("Backoff Distance");
-        panelLocations.add(lblBackoffDistance, "2, 10, right, default");
+        panelLocations.add(lblBackoffDistance, "2, 12, right, default");
         
         backoffDistTf = new JTextField();
-        panelLocations.add(backoffDistTf, "4, 10");
+        panelLocations.add(backoffDistTf, "4, 12");
         backoffDistTf.setColumns(10);
-        //
-        panelVision = new JPanel();
-        panelVision.setBorder(new TitledBorder(null, "Vision", TitledBorder.LEADING,
-                TitledBorder.TOP, null, null));
-        panelFields.add(panelVision);
-        panelVision.setLayout(new BoxLayout(panelVision, BoxLayout.Y_AXIS));
-
-        panelVisionEnabled = new JPanel();
-        FlowLayout fl_panelVisionEnabled = (FlowLayout) panelVisionEnabled.getLayout();
-        fl_panelVisionEnabled.setAlignment(FlowLayout.LEFT);
-        panelVision.add(panelVisionEnabled);
-
-        chckbxVisionEnabled = new JCheckBox("Vision Enabled?");
-        panelVisionEnabled.add(chckbxVisionEnabled);
-
-        separator = new JSeparator();
-        panelVision.add(separator);
-
-        panelVisionTemplateAndAoe = new JPanel();
-        panelVision.add(panelVisionTemplateAndAoe);
-        panelVisionTemplateAndAoe.setLayout(new FormLayout(
-                new ColumnSpec[] {FormSpecs.LABEL_COMPONENT_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
-                        FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,},
-                new RowSpec[] {FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,}));
-
-        panelTemplate = new JPanel();
-        panelTemplate.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null),
-                "Template Image", TitledBorder.LEADING, TitledBorder.TOP, null,
-                new Color(0, 0, 0)));
-        panelVisionTemplateAndAoe.add(panelTemplate, "2, 2, center, fill");
-        panelTemplate.setLayout(new BoxLayout(panelTemplate, BoxLayout.Y_AXIS));
-
-        labelTemplateImage = new JLabel("");
-        labelTemplateImage.setAlignmentX(Component.CENTER_ALIGNMENT);
-        panelTemplate.add(labelTemplateImage);
-        labelTemplateImage.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
-        labelTemplateImage.setMinimumSize(new Dimension(150, 150));
-        labelTemplateImage.setMaximumSize(new Dimension(150, 150));
-        labelTemplateImage.setHorizontalAlignment(SwingConstants.CENTER);
-        labelTemplateImage.setSize(new Dimension(150, 150));
-        labelTemplateImage.setPreferredSize(new Dimension(150, 150));
-
-        panel = new JPanel();
-        panelTemplate.add(panel);
-
-        btnChangeTemplateImage = new JButton(selectTemplateImageAction);
-        panel.add(btnChangeTemplateImage);
-        btnChangeTemplateImage.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        btnCancelChangeTemplateImage = new JButton(cancelSelectTemplateImageAction);
-        panel.add(btnCancelChangeTemplateImage);
-
-        panelAoE = new JPanel();
-        panelAoE.setBorder(new TitledBorder(null, "Area of Interest", TitledBorder.LEADING,
-                TitledBorder.TOP, null, null));
-        panelVisionTemplateAndAoe.add(panelAoE, "4, 2, fill, fill");
-        panelAoE.setLayout(new FormLayout(
-                new ColumnSpec[] {FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("default:grow"),
-                        FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("default:grow"),
-                        FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
-                        FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
-                        FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
-                        FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,},
-                new RowSpec[] {FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
-                        FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,}));
-
-        lblX_1 = new JLabel("X");
-        panelAoE.add(lblX_1, "2, 2");
-
-        lblY_1 = new JLabel("Y");
-        panelAoE.add(lblY_1, "4, 2");
-
-        lblWidth = new JLabel("Width");
-        panelAoE.add(lblWidth, "6, 2");
-
-        lblHeight = new JLabel("Height");
-        panelAoE.add(lblHeight, "8, 2");
-
-        textFieldAoiX = new JTextField();
-        panelAoE.add(textFieldAoiX, "2, 4, fill, default");
-        textFieldAoiX.setColumns(5);
-
-        textFieldAoiY = new JTextField();
-        panelAoE.add(textFieldAoiY, "4, 4, fill, default");
-        textFieldAoiY.setColumns(5);
-
-        textFieldAoiWidth = new JTextField();
-        panelAoE.add(textFieldAoiWidth, "6, 4, fill, default");
-        textFieldAoiWidth.setColumns(5);
-
-        textFieldAoiHeight = new JTextField();
-        panelAoE.add(textFieldAoiHeight, "8, 4, fill, default");
-        textFieldAoiHeight.setColumns(5);
-
-        btnChangeAoi = new JButton("Change");
-        btnChangeAoi.setAction(selectAoiAction);
-        panelAoE.add(btnChangeAoi, "10, 4");
-
-        btnCancelChangeAoi = new JButton("Cancel");
-        btnCancelChangeAoi.setAction(cancelSelectAoiAction);
-        panelAoE.add(btnCancelChangeAoi, "12, 4");
-
-        cancelSelectTemplateImageAction.setEnabled(false);
-        cancelSelectAoiAction.setEnabled(false);
+        
+        label = new JLabel("mm");
+        panelLocations.add(label, "6, 12");
+        
+        lblNewLabel_1 = new JLabel("Component Pitch");
+        panelLocations.add(lblNewLabel_1, "2, 14, right, default");
+        
+        tfComponentPitch = new JTextField();
+        panelLocations.add(tfComponentPitch, "4, 14");
+        tfComponentPitch.setColumns(10);
+        
+        label_1 = new JLabel("mm");
+        panelLocations.add(label_1, "6, 14");
 
         contentPanel.add(panelFields);
     }
@@ -342,185 +233,38 @@ public class DragFeeder2ConfigurationWizard
 
         MutableLocationProxy feedStartLocation = new MutableLocationProxy();
         bind(UpdateStrategy.READ_WRITE, feeder, "feedStartLocation", feedStartLocation, "location");
-        addWrappedBinding(feedStartLocation, "lengthX", textFieldFeedStartX, "text",
-                lengthConverter);
-        addWrappedBinding(feedStartLocation, "lengthY", textFieldFeedStartY, "text",
-                lengthConverter);
-        addWrappedBinding(feedStartLocation, "lengthZ", textFieldFeedStartZ, "text",
-                lengthConverter);
+        addWrappedBinding(feedStartLocation, "lengthX", textFieldFeedStartX, "text", lengthConverter);
+        addWrappedBinding(feedStartLocation, "lengthY", textFieldFeedStartY, "text", lengthConverter);
+        addWrappedBinding(feedStartLocation, "lengthZ", textFieldFeedStartZ, "text", lengthConverter);
 
-        MutableLocationProxy feedEndLocation = new MutableLocationProxy();
-        bind(UpdateStrategy.READ_WRITE, feeder, "feedEndLocation", feedEndLocation, "location");
-        addWrappedBinding(feedEndLocation, "lengthX", textFieldFeedEndX, "text", lengthConverter);
-        addWrappedBinding(feedEndLocation, "lengthY", textFieldFeedEndY, "text", lengthConverter);
-        addWrappedBinding(feedEndLocation, "lengthZ", textFieldFeedEndZ, "text", lengthConverter);
-
-        addWrappedBinding(feeder, "vision.enabled", chckbxVisionEnabled, "selected");
-        addWrappedBinding(feeder, "vision.templateImage", labelTemplateImage, "icon",
-                imageConverter);
-
-        addWrappedBinding(feeder, "vision.areaOfInterest.x", textFieldAoiX, "text", intConverter);
-        addWrappedBinding(feeder, "vision.areaOfInterest.y", textFieldAoiY, "text", intConverter);
-
-        addWrappedBinding(feeder, "vision.areaOfInterest.width", textFieldAoiWidth, "text",
-                intConverter);
-        addWrappedBinding(feeder, "vision.areaOfInterest.height", textFieldAoiHeight, "text",
-                intConverter);
+        addWrappedBinding(feeder, "backoffDistance_mm", backoffDistTf, "text", doubleConverter);
+        addWrappedBinding(feeder, "feedDistance_mm", tfFeedDistance, "text", doubleConverter);
+        addWrappedBinding(feeder, "feedDirection", cbDirection, "selectedItem");
+        addWrappedBinding(feeder, "componentPitch_mm", tfComponentPitch, "text", intConverter);
         
-        addWrappedBinding(feeder, "backoffDistance", backoffDistTf, "text", lengthConverter);
+        
 
         ComponentDecorators.decorateWithAutoSelectAndLengthConversion(textFieldFeedRate);
         ComponentDecorators.decorateWithAutoSelect(textFieldActuatorId);
         ComponentDecorators.decorateWithAutoSelectAndLengthConversion(textFieldFeedStartX);
         ComponentDecorators.decorateWithAutoSelectAndLengthConversion(textFieldFeedStartY);
         ComponentDecorators.decorateWithAutoSelectAndLengthConversion(textFieldFeedStartZ);
-        ComponentDecorators.decorateWithAutoSelectAndLengthConversion(textFieldFeedEndX);
-        ComponentDecorators.decorateWithAutoSelectAndLengthConversion(textFieldFeedEndY);
-        ComponentDecorators.decorateWithAutoSelectAndLengthConversion(textFieldFeedEndZ);
-        ComponentDecorators.decorateWithAutoSelect(textFieldAoiX);
-        ComponentDecorators.decorateWithAutoSelect(textFieldAoiY);
-        ComponentDecorators.decorateWithAutoSelect(textFieldAoiWidth);
-        ComponentDecorators.decorateWithAutoSelect(textFieldAoiHeight);
         ComponentDecorators.decorateWithAutoSelectAndLengthConversion(backoffDistTf);
+        ComponentDecorators.decorateWithAutoSelectAndLengthConversion(tfFeedDistance);
+        ComponentDecorators.decorateWithAutoSelect(tfComponentPitch);
 
         bind(UpdateStrategy.READ, feeder, "actuatorName", locationButtonsPanelFeedStart, "actuatorName");
-        bind(UpdateStrategy.READ, feeder, "actuatorName", locationButtonsPanelFeedEnd, "actuatorName");
     }
 
-    @SuppressWarnings("serial")
-    private Action selectTemplateImageAction = new AbstractAction("Select") {
-        @Override
-        public void actionPerformed(ActionEvent arg0) {
-            UiUtils.messageBoxOnException(() -> {
-                Camera camera = MainFrame.get().getMachineControls().getSelectedTool().getHead()
-                        .getDefaultCamera();
-                CameraView cameraView = MainFrame.get().getCameraViews().setSelectedCamera(camera);
 
-                cameraView.setSelectionEnabled(true);
-                // org.openpnp.model.Rectangle r =
-                // feeder.getVision().getTemplateImageCoordinates();
-                org.openpnp.model.Rectangle r = null;
-                if (r == null || r.getWidth() == 0 || r.getHeight() == 0) {
-                    cameraView.setSelection(0, 0, 100, 100);
-                }
-                else {
-                    // cameraView.setSelection(r.getLeft(), r.getTop(),
-                    // r.getWidth(), r.getHeight());
-                }
-                btnChangeTemplateImage.setAction(confirmSelectTemplateImageAction);
-                cancelSelectTemplateImageAction.setEnabled(true);
-            });
-        }
-    };
-
-    @SuppressWarnings("serial")
-    private Action confirmSelectTemplateImageAction = new AbstractAction("Confirm") {
-        @Override
-        public void actionPerformed(ActionEvent arg0) {
-            UiUtils.messageBoxOnException(() -> {
-                Camera camera = MainFrame.get().getMachineControls().getSelectedTool().getHead()
-                        .getDefaultCamera();
-                CameraView cameraView = MainFrame.get().getCameraViews().setSelectedCamera(camera);
-
-                BufferedImage image = cameraView.captureSelectionImage();
-                if (image == null) {
-                    MessageBoxes.errorBox(DragFeeder2ConfigurationWizard.this,
-                            "No Image Selected",
-                            "Please select an area of the camera image using the mouse.");
-                }
-                else {
-                    labelTemplateImage.setIcon(new ImageIcon(image));
-                }
-                cameraView.setSelectionEnabled(false);
-                btnChangeTemplateImage.setAction(selectTemplateImageAction);
-                cancelSelectTemplateImageAction.setEnabled(false);
-            });
-        }
-    };
-
-    @SuppressWarnings("serial")
-    private Action cancelSelectTemplateImageAction = new AbstractAction("Cancel") {
-        @Override
-        public void actionPerformed(ActionEvent arg0) {
-            UiUtils.messageBoxOnException(() -> {
-                Camera camera = MainFrame.get().getMachineControls().getSelectedTool().getHead()
-                        .getDefaultCamera();
-                CameraView cameraView = MainFrame.get().getCameraViews().setSelectedCamera(camera);
-
-                btnChangeTemplateImage.setAction(selectTemplateImageAction);
-                cancelSelectTemplateImageAction.setEnabled(false);
-                cameraView.setSelectionEnabled(false);
-            });
-        }
-    };
-
-    @SuppressWarnings("serial")
-    private Action selectAoiAction = new AbstractAction("Select") {
-        @Override
-        public void actionPerformed(ActionEvent arg0) {
-            UiUtils.messageBoxOnException(() -> {
-                Camera camera = MainFrame.get().getMachineControls().getSelectedTool().getHead()
-                        .getDefaultCamera();
-                CameraView cameraView = MainFrame.get().getCameraViews().setSelectedCamera(camera);
-
-                btnChangeAoi.setAction(confirmSelectAoiAction);
-                cancelSelectAoiAction.setEnabled(true);
-
-                cameraView.setSelectionEnabled(true);
-                org.openpnp.model.Rectangle r = feeder.getVision().getAreaOfInterest();
-                if (r == null || r.getWidth() == 0 || r.getHeight() == 0) {
-                    cameraView.setSelection(0, 0, 100, 100);
-                }
-                else {
-                    cameraView.setSelection(r.getX(), r.getY(), r.getWidth(), r.getHeight());
-                }
-            });
-        }
-    };
-
-    @SuppressWarnings("serial")
-    private Action confirmSelectAoiAction = new AbstractAction("Confirm") {
-        @Override
-        public void actionPerformed(ActionEvent arg0) {
-            UiUtils.messageBoxOnException(() -> {
-                Camera camera = MainFrame.get().getMachineControls().getSelectedTool().getHead()
-                        .getDefaultCamera();
-                CameraView cameraView = MainFrame.get().getCameraViews().setSelectedCamera(camera);
-
-                btnChangeAoi.setAction(selectAoiAction);
-                cancelSelectAoiAction.setEnabled(false);
-
-                cameraView.setSelectionEnabled(false);
-                final Rectangle rect = cameraView.getSelection();
-                SwingUtilities.invokeLater(new Runnable() {
-                    public void run() {
-                        textFieldAoiX.setText(Integer.toString(rect.x));
-                        textFieldAoiY.setText(Integer.toString(rect.y));
-                        textFieldAoiWidth.setText(Integer.toString(rect.width));
-                        textFieldAoiHeight.setText(Integer.toString(rect.height));
-                    }
-                });
-            });
-        }
-    };
-
-    @SuppressWarnings("serial")
-    private Action cancelSelectAoiAction = new AbstractAction("Cancel") {
-        @Override
-        public void actionPerformed(ActionEvent arg0) {
-            UiUtils.messageBoxOnException(() -> {
-                Camera camera = MainFrame.get().getMachineControls().getSelectedTool().getHead()
-                        .getDefaultCamera();
-                CameraView cameraView = MainFrame.get().getCameraViews().setSelectedCamera(camera);
-
-                btnChangeAoi.setAction(selectAoiAction);
-                cancelSelectAoiAction.setEnabled(false);
-                btnChangeAoi.setAction(selectAoiAction);
-                cancelSelectAoiAction.setEnabled(false);
-                cameraView.setSelectionEnabled(false);
-            });
-        }
-    };
     private JLabel lblBackoffDistance;
     private JTextField backoffDistTf;
+    private JLabel lblNewLabel;
+    private JComboBox cbDirection;
+    private JTextField tfFeedDistance;
+    private JLabel lblNewLabel_1;
+    private JTextField tfComponentPitch;
+    private JLabel lblNewLabel_2;
+    private JLabel label;
+    private JLabel label_1;
 }
