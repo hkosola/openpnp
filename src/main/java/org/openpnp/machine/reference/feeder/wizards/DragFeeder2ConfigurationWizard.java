@@ -237,10 +237,10 @@ public class DragFeeder2ConfigurationWizard
         addWrappedBinding(feedStartLocation, "lengthY", textFieldFeedStartY, "text", lengthConverter);
         addWrappedBinding(feedStartLocation, "lengthZ", textFieldFeedStartZ, "text", lengthConverter);
 
-        addWrappedBinding(feeder, "backoffDistance_mm", backoffDistTf, "text", doubleConverter);
-        addWrappedBinding(feeder, "feedDistance_mm", tfFeedDistance, "text", doubleConverter);
+        addWrappedBinding(feeder, "backoffDistanceMm", backoffDistTf, "text", doubleConverter);
+        addWrappedBinding(feeder, "feedDistanceMm", tfFeedDistance, "text", doubleConverter);
         addWrappedBinding(feeder, "feedDirection", cbDirection, "selectedItem");
-        addWrappedBinding(feeder, "componentPitch_mm", tfComponentPitch, "text", intConverter);
+        addWrappedBinding(feeder, "componentPitchMm", tfComponentPitch, "text", intConverter);
         
         
 

@@ -123,10 +123,10 @@ public class DragFeeder2 extends ReferenceFeeder {
         
        int dX = 0;
        int dY = 0;
-       if(this.feedDirection.equals("+X")) dX =  1;
-       if(this.feedDirection.equals("-X")) dX = -1;
-       if(this.feedDirection.equals("+Y")) dY =  1;
-       if(this.feedDirection.equals("-Y")) dY = -1;
+       if(this.feedDirection.equals("+X")) { dX =  1; }
+       if(this.feedDirection.equals("-X")) { dX = -1; }
+       if(this.feedDirection.equals("+Y")) { dY =  1; }
+       if(this.feedDirection.equals("-Y")) { dY = -1; }
 
     	        
        if(pickPoint>=0) {
@@ -149,20 +149,19 @@ public class DragFeeder2 extends ReferenceFeeder {
        
         head.moveToSafeZ();
 
-        // Now we have visionOffsets (if we're using them) so we
-        // need to create a local, offset version of the feedStartLocation,
-        // feedEndLocation and pickLocation. pickLocation will be saved
-        // for the pick operation while feed start and end are used
-        // here and then discarded.
-        Location feedStartLocation = this.feedStartLocation;
-        Location feedEndLocation = this.feedStartLocation.add(lf);
+        // set rotation for pickup, 
+        // plenty of time to rotate nozzle when we are traveling to the drag position
         
+        Location feedStartLocation = this.feedStartLocation.derive(null, null, null, this.location.getRotation());
+        Location feedEndLocation = feedStartLocation.add(lf);
+        
+        // in practice, the feed distance must be multiple of hole pitch (4mm)
         pickPoint += (int)(feedDistance_mm + 0.5);
         Location lp = new Location(LengthUnit.Millimeters, pickPoint * dX, pickPoint * dY, 0,0);
         pickLocation = this.location.add(lp);
 
         // Move the actuator to the feed start location.
-        actuator.moveTo(feedStartLocation.derive(null, null, Double.NaN, Double.NaN));
+        actuator.moveTo(feedStartLocation.derive(null, null, Double.NaN, null));
 
         // extend the pin
         actuator.actuate(true);
@@ -219,19 +218,19 @@ public class DragFeeder2 extends ReferenceFeeder {
         propertyChangeSupport.firePropertyChange("actuatorName", oldValue, actuatorName);
     }
 
-    public double getBackoffDistance_mm() {
+    public double getBackoffDistanceMm() {
         return backoffDistance_mm;
     }
 
-    public void setBackoffDistance_mm(double backoffDistance) {
-        this.backoffDistance_mm = backoffDistance;
+    public void setBackoffDistanceMm(double backoffDistance_mm) {
+        this.backoffDistance_mm = backoffDistance_mm;
     }
 
-    public double getFeedDistance_mm() { 
+    public double getFeedDistanceMm() { 
     	return feedDistance_mm;
     }
-    public void setFeedDistance_mm(double feedDistance) {
-    	this.feedDistance_mm = feedDistance;
+    public void setFeedDistanceMm(double feedDistance_mm) {
+    	this.feedDistance_mm = feedDistance_mm;
     }
 
     public String getFeedDirection() {
@@ -241,11 +240,11 @@ public class DragFeeder2 extends ReferenceFeeder {
     	this.feedDirection = direction;
     }
     
-    public int getComponentPitch_mm() {
+    public int getComponentPitchMm() {
     	return componentPitch_mm;
     }
-    public void setComponentPitch_mm(int pitch) {
-    	this.componentPitch_mm = pitch;
+    public void setComponentPitchMm(int pitch_mm) {
+    	this.componentPitch_mm = pitch_mm;
     }
     
     public void addPropertyChangeListener(PropertyChangeListener listener) {
