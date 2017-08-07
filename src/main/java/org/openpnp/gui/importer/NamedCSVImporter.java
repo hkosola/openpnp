@@ -171,6 +171,7 @@ public class NamedCSVImporter implements BoardImporter {
         Cmmt = checkCSV(Cmmts, str);
         if(Val==-1) { 
         	Val = Cmmt;
+        	Cmmt = -1;
         }
     	
         // note that layer (TB) and Height (HT) are optional and thus checked against -2
@@ -345,12 +346,12 @@ public class NamedCSVImporter implements BoardImporter {
                         0, placementRotation));
                 Configuration cfg = Configuration.get();
                 if (cfg != null && createMissingParts) {
-                    String partId = as[Pack];
+                    String partId = as[Pack].toUpperCase();
                     if(!as[Val].isEmpty()) {
-                    	partId = partId+"-"+as[Val];
+                    	partId = partId+"-"+as[Val].toUpperCase();
                     }
-                    if(!as[Cmmt].isEmpty()) {
-                    	partId = partId+"-"+as[Cmmt];
+                    if((Cmmt>=0) && (!as[Cmmt].isEmpty())) {
+                    	partId = partId+"-"+as[Cmmt].toUpperCase();
                     }
                     Part part = cfg.getPart(partId);
 
@@ -358,9 +359,9 @@ public class NamedCSVImporter implements BoardImporter {
                         part = new Part(partId);
                         Length l = new Length(heightZ, LengthUnit.Millimeters);
                         part.setHeight(l);
-                        Package pkg = cfg.getPackage(as[Pack]);
+                        Package pkg = cfg.getPackage(as[Pack].toUpperCase());
                         if (pkg == null) {
-                            pkg = new Package(as[Pack]);
+                            pkg = new Package(as[Pack].toUpperCase());
                             cfg.addPackage(pkg);
                         }
                         part.setPackage(pkg);
@@ -370,8 +371,16 @@ public class NamedCSVImporter implements BoardImporter {
 
                     // if part exists and height exist and user wants height updated do it.
                     if (cfg != null && updateHeights && HT != -1) {
-                        String partId2 = as[Pack] + "-" + as[Val];
+
+                        String partId2 = as[Pack].toUpperCase();
+                        if(!as[Val].isEmpty()) {
+                        	partId2 = partId2+"-"+as[Val].toUpperCase();
+                        }
+                        if((Cmmt>=0) && (!as[Cmmt].isEmpty())) {
+                        	partId2 = partId2+"-"+as[Cmmt].toUpperCase();
+                        }
                         Part part2 = cfg.getPart(partId2);
+
                         if (part2 != null) {
                             Length l = new Length(heightZ, LengthUnit.Millimeters);
                             part2.setHeight(l);
