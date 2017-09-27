@@ -64,6 +64,12 @@ public class Location {
         this.rotation = rotation;
     }
 
+    public void setRotation(double rot) {
+    	rotation = rot;
+    }
+    public void setY(double yy) {
+    	y = yy;
+    }
     public double getX() {
         return x;
     }

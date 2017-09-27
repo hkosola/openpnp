@@ -64,6 +64,11 @@ public abstract class AbstractFeeder extends AbstractModelObject implements Feed
         this.partId = part.getId();
     }
 
+    public void clearPart() {
+    	this.part = null;
+        this.partId = "";
+    }
+    
     @Override
     public Part getPart() {
         return part;
